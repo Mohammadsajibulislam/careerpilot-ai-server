@@ -21,6 +21,13 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
 
+  account: {
+    accountLinking: {
+      requireLocalEmailVerified: false,
+    },
+    storeStateStrategy: "cookie",
+  },
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
