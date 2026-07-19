@@ -1,15 +1,15 @@
-import "dotenv/config"; 
+import "dotenv/config";
 
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { connectDB } from "./config/db";
 import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
+import jobsRouter from "./routes/jobs";
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -17,7 +17,6 @@ app.use(
   })
 );
 
-// Better Auth route — express.json() এর আগে
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
@@ -25,6 +24,8 @@ app.use(express.json());
 app.get("/", (req: Request, res: Response) => {
   res.send("CareerPilot AI server is running");
 });
+
+app.use("/api/jobs", jobsRouter);
 
 async function startServer() {
   try {
@@ -38,6 +39,4 @@ async function startServer() {
   }
 }
 
-
 startServer();
-
