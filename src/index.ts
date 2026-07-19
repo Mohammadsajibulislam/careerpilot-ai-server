@@ -9,6 +9,7 @@ import jobsRouter from "./routes/jobs";
 import profileRouter from "./routes/profile";
 import matchRouter from "./routes/match";
 import interviewChatRouter from "./routes/interviewChat";
+import statsRouter from "./routes/stats";
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,7 @@ app.use("/api/jobs", jobsRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/match", matchRouter);
 app.use("/api/interview-chat", interviewChatRouter);
+app.use("/api/stats", statsRouter);
 
 async function startServer() {
   try {
