@@ -49,6 +49,22 @@ router.get("/", async (req, res) => {
         res.status(500).json({ message: "Failed to fetch jobs" });
     }
 });
+// GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
+router.get("/my/all", verifyToken_1.verifyToken, async (req, res) => {
+    try {
+        const db = (0, db_1.getDB)();
+        const jobs = await db
+            .collection("jobs")
+            .find({ postedBy: req.user?.id })
+            .sort({ updatedAt: -1 })
+            .toArray();
+        res.json({ jobs });
+    }
+    catch (error) {
+        console.error("GET /jobs/my/all error:", error);
+        res.status(500).json({ message: "Failed to fetch your jobs" });
+    }
+});
 // GET /api/jobs/:id — public, single job details
 router.get("/:id", async (req, res) => {
     try {

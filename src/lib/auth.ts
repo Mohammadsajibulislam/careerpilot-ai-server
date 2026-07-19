@@ -25,7 +25,7 @@ export const auth = betterAuth({
     accountLinking: {
       requireLocalEmailVerified: false,
     },
-    storeStateStrategy: "cookie",
+    storeStateStrategy: "database",
   },
 
   socialProviders: {

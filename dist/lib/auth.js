@@ -24,7 +24,7 @@ exports.auth = (0, better_auth_1.betterAuth)({
         accountLinking: {
             requireLocalEmailVerified: false,
         },
-        storeStateStrategy: "cookie",
+        storeStateStrategy: "database",
     },
     socialProviders: {
         google: {
