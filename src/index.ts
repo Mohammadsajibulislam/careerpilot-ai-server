@@ -7,6 +7,7 @@ import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
 import jobsRouter from "./routes/jobs";
 import profileRouter from "./routes/profile";
+import matchRouter from "./routes/match";
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/jobs", jobsRouter);
 app.use("/api/profile", profileRouter);
+app.use("/api/match", matchRouter);
 
 async function startServer() {
   try {
