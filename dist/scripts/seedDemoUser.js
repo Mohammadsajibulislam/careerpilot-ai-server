@@ -1,10 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-const auth_1 = require("../lib/auth");
+import "dotenv/config";
+import { auth } from "../lib/auth.js";
 async function seedDemoUser() {
     try {
-        const result = await auth_1.auth.api.signUpEmail({
+        const result = await auth.api.signUpEmail({
             body: {
                 name: "Demo User",
                 email: "demo@careerpilot.ai",

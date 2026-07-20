@@ -1,8 +1,8 @@
 import { Router, Response } from "express";
 import { ObjectId } from "mongodb";
-import { getDB } from "../config/db";
-import { ai, GEMINI_MODEL } from "../lib/gemini";
-import { verifyToken, AuthRequest } from "../middleware/verifyToken";
+import { getDB } from "../config/db.js";
+import { ai, GEMINI_MODEL } from "../lib/gemini.js";
+import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 
 const router = Router();
 

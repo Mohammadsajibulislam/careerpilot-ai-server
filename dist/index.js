@@ -1,32 +1,27 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const db_1 = require("./config/db");
-const auth_1 = require("./lib/auth");
-const node_1 = require("better-auth/node");
-const jobs_1 = __importDefault(require("./routes/jobs"));
-const profile_1 = __importDefault(require("./routes/profile"));
-const match_1 = __importDefault(require("./routes/match"));
-const interviewChat_1 = __importDefault(require("./routes/interviewChat"));
-const stats_1 = __importDefault(require("./routes/stats"));
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)({
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import { connectDB } from "./config/db.js";
+import { auth } from "./lib/auth.js";
+import { toNodeHandler } from "better-auth/node";
+import jobsRouter from "./routes/jobs.js";
+import profileRouter from "./routes/profile.js";
+import matchRouter from "./routes/match.js";
+import interviewChatRouter from "./routes/interviewChat.js";
+import statsRouter from "./routes/stats.js";
+const app = express();
+app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
 }));
-app.all("/api/auth/*splat", (0, node_1.toNodeHandler)(auth_1.auth));
-app.use(express_1.default.json());
+app.all("/api/auth/*splat", toNodeHandler(auth));
+app.use(express.json());
 // lazily connect to DB on first request (works in serverless)
 let dbConnected = false;
 app.use(async (_req, _res, next) => {
     if (!dbConnected) {
         try {
-            await (0, db_1.connectDB)();
+            await connectDB();
             dbConnected = true;
         }
         catch (error) {
@@ -38,18 +33,18 @@ app.use(async (_req, _res, next) => {
 app.get("/", (req, res) => {
     res.send("CareerPilot AI server is running");
 });
-app.use("/api/jobs", jobs_1.default);
-app.use("/api/profile", profile_1.default);
-app.use("/api/match", match_1.default);
-app.use("/api/interview-chat", interviewChat_1.default);
-app.use("/api/stats", stats_1.default);
+app.use("/api/jobs", jobsRouter);
+app.use("/api/profile", profileRouter);
+app.use("/api/match", matchRouter);
+app.use("/api/interview-chat", interviewChatRouter);
+app.use("/api/stats", statsRouter);
 // Only start the server when running directly (not on Vercel serverless)
 const isServerless = process.env.VERCEL === "1";
 if (!isServerless) {
     const PORT = process.env.PORT || 5000;
     (async () => {
         try {
-            await (0, db_1.connectDB)();
+            await connectDB();
             dbConnected = true;
             app.listen(PORT, () => {
                 console.log(`✅ Server running on port ${PORT}`);
@@ -61,4 +56,4 @@ if (!isServerless) {
         }
     })();
 }
-exports.default = app;
+export default app;

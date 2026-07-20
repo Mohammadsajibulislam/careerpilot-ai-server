@@ -1,14 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
-const mongodb_1 = require("mongodb");
-const db_1 = require("../config/db");
-const verifyToken_1 = require("../middleware/verifyToken");
-const router = (0, express_1.Router)();
+import { Router } from "express";
+import { ObjectId } from "mongodb";
+import { getDB } from "../config/db.js";
+import { verifyToken } from "../middleware/verifyToken.js";
+const router = Router();
 // GET /api/jobs — public, with search/filter/sort/pagination
 router.get("/", async (req, res) => {
     try {
-        const db = (0, db_1.getDB)();
+        const db = getDB();
         const { search, category, jobType, sort = "newest", page = "1", limit = "8", } = req.query;
         const query = {};
         if (search) {
@@ -50,9 +48,9 @@ router.get("/", async (req, res) => {
     }
 });
 // GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
-router.get("/my/all", verifyToken_1.verifyToken, async (req, res) => {
+router.get("/my/all", verifyToken, async (req, res) => {
     try {
-        const db = (0, db_1.getDB)();
+        const db = getDB();
         const jobs = await db
             .collection("jobs")
             .find({ postedBy: req.user?.id })
@@ -69,11 +67,11 @@ router.get("/my/all", verifyToken_1.verifyToken, async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        if (Array.isArray(id) || !mongodb_1.ObjectId.isValid(id)) {
+        if (Array.isArray(id) || !ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid job id" });
         }
-        const db = (0, db_1.getDB)();
-        const job = await db.collection("jobs").findOne({ _id: new mongodb_1.ObjectId(id) });
+        const db = getDB();
+        const job = await db.collection("jobs").findOne({ _id: new ObjectId(id) });
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
@@ -85,9 +83,9 @@ router.get("/:id", async (req, res) => {
     }
 });
 // POST /api/jobs — protected
-router.post("/", verifyToken_1.verifyToken, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
     try {
-        const db = (0, db_1.getDB)();
+        const db = getDB();
         const newJob = {
             ...req.body,
             postedBy: req.user?.id,
@@ -104,14 +102,14 @@ router.post("/", verifyToken_1.verifyToken, async (req, res) => {
     }
 });
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id", verifyToken_1.verifyToken, async (req, res) => {
+router.patch("/:id", verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
-        if (Array.isArray(id) || !mongodb_1.ObjectId.isValid(id)) {
+        if (Array.isArray(id) || !ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid job id" });
         }
-        const db = (0, db_1.getDB)();
-        const result = await db.collection("jobs").updateOne({ _id: new mongodb_1.ObjectId(id), postedBy: req.user?.id }, { $set: { ...req.body, updatedAt: new Date() } });
+        const db = getDB();
+        const result = await db.collection("jobs").updateOne({ _id: new ObjectId(id), postedBy: req.user?.id }, { $set: { ...req.body, updatedAt: new Date() } });
         if (result.matchedCount === 0) {
             return res.status(404).json({ message: "Job not found or not yours" });
         }
@@ -123,15 +121,15 @@ router.patch("/:id", verifyToken_1.verifyToken, async (req, res) => {
     }
 });
 // DELETE /api/jobs/:id — protected
-router.delete("/:id", verifyToken_1.verifyToken, async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
-        if (Array.isArray(id) || !mongodb_1.ObjectId.isValid(id)) {
+        if (Array.isArray(id) || !ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid job id" });
         }
-        const db = (0, db_1.getDB)();
+        const db = getDB();
         const result = await db.collection("jobs").deleteOne({
-            _id: new mongodb_1.ObjectId(id),
+            _id: new ObjectId(id),
             postedBy: req.user?.id,
         });
         if (result.deletedCount === 0) {
@@ -144,4 +142,4 @@ router.delete("/:id", verifyToken_1.verifyToken, async (req, res) => {
         res.status(500).json({ message: "Failed to delete job" });
     }
 });
-exports.default = router;
+export default router;

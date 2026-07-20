@@ -2,14 +2,14 @@ import "dotenv/config";
 
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { connectDB } from "./config/db";
-import { auth } from "./lib/auth";
+import { connectDB } from "./config/db.js";
+import { auth } from "./lib/auth.js";
 import { toNodeHandler } from "better-auth/node";
-import jobsRouter from "./routes/jobs";
-import profileRouter from "./routes/profile";
-import matchRouter from "./routes/match";
-import interviewChatRouter from "./routes/interviewChat";
-import statsRouter from "./routes/stats";
+import jobsRouter from "./routes/jobs.js";
+import profileRouter from "./routes/profile.js";
+import matchRouter from "./routes/match.js";
+import interviewChatRouter from "./routes/interviewChat.js";
+import statsRouter from "./routes/stats.js";
 
 const app: Application = express();
 

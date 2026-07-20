@@ -1,8 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectDB = connectDB;
-exports.getDB = getDB;
-const mongodb_1 = require("mongodb");
+import { MongoClient } from "mongodb";
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 if (!uri) {
@@ -11,9 +7,9 @@ if (!uri) {
 if (!dbName) {
     throw new Error("❌ DB_NAME .env ফাইলে পাওয়া যায়নি");
 }
-const client = new mongodb_1.MongoClient(uri);
+const client = new MongoClient(uri);
 let db;
-async function connectDB() {
+export async function connectDB() {
     if (db)
         return db; // already connected, reuse
     await client.connect();
@@ -21,7 +17,7 @@ async function connectDB() {
     console.log(`✅ MongoDB connected: ${dbName}`);
     return db;
 }
-function getDB() {
+export function getDB() {
     if (!db) {
         throw new Error("❌ Database এখনো connect হয়নি — আগে connectDB() call করো");
     }

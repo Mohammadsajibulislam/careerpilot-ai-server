@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { getDB } from "../config/db";
-import { verifyToken, AuthRequest } from "../middleware/verifyToken";
+import { getDB } from "../config/db.js";
+import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 
 const router = Router();
 
