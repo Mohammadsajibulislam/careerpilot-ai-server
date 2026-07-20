@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/db.js";
-import { verifyToken } from "../middleware/verifyToken.js";
 import { validate } from "../middleware/validate.js";
 import { addJobSchema, updateJobSchema } from "../validators/job.js";
 const router = Router();
@@ -50,7 +49,7 @@ router.get("/", async (req, res) => {
     }
 });
 // GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
-router.get("/my/all", verifyToken, async (req, res) => {
+router.get("/my/all", async (req, res) => {
     try {
         const db = getDB();
         const jobs = await db
@@ -85,7 +84,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 // POST /api/jobs — protected
-router.post("/", verifyToken, validate(addJobSchema), async (req, res) => {
+router.post("/", validate(addJobSchema), async (req, res) => {
     try {
         const db = getDB();
         const newJob = {
@@ -104,7 +103,7 @@ router.post("/", verifyToken, validate(addJobSchema), async (req, res) => {
     }
 });
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id", verifyToken, validate(updateJobSchema), async (req, res) => {
+router.patch("/:id", validate(updateJobSchema), async (req, res) => {
     try {
         const { id } = req.params;
         if (Array.isArray(id) || !ObjectId.isValid(id)) {
@@ -123,7 +122,7 @@ router.patch("/:id", verifyToken, validate(updateJobSchema), async (req, res) =>
     }
 });
 // DELETE /api/jobs/:id — protected
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         const { id } = req.params;
         if (Array.isArray(id) || !ObjectId.isValid(id)) {
