@@ -6,7 +6,7 @@ import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 
 const router = Router();
 
-router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/:jobId", async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
     if (Array.isArray(jobId) || !ObjectId.isValid(jobId)) {
@@ -26,7 +26,7 @@ router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
+router.post("/:jobId",async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
     const { message } = req.body;

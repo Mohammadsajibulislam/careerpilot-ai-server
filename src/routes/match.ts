@@ -13,7 +13,7 @@ interface MatchResult {
 }
 
 // POST /api/match/:jobId — protected, generates AI match score for one job
-router.post("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
+router.post("/:jobId",  async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 
@@ -84,7 +84,7 @@ Return a match score from 0-100, 2-4 short reasons why it matches, and 0-3 short
 });
 
 // GET /api/match/:jobId — protected, cached result থাকলে সেটা ফেরত দেয়
-router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/:jobId", async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 

@@ -65,7 +65,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
-router.get("/my/all", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/my/all",  async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const jobs = await db
@@ -104,7 +104,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/jobs — protected
-router.post("/", verifyToken, validate(addJobSchema), async (req: AuthRequest, res: Response) => {
+router.post("/",  validate(addJobSchema), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const newJob = {
@@ -124,7 +124,7 @@ router.post("/", verifyToken, validate(addJobSchema), async (req: AuthRequest, r
 });
 
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id", verifyToken, validate(updateJobSchema), async (req: AuthRequest, res: Response) => {
+router.patch("/:id",  validate(updateJobSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -149,7 +149,7 @@ router.patch("/:id", verifyToken, validate(updateJobSchema), async (req: AuthReq
 });
 
 // DELETE /api/jobs/:id — protected
-router.delete("/:id", verifyToken, async (req: AuthRequest, res: Response) => {
+router.delete("/:id",  async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 

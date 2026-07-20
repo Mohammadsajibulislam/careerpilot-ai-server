@@ -6,7 +6,7 @@ import { coverLetterSchema } from "../validators/job.js";
 
 const router = Router();
 
-router.post("/", verifyToken, validate(coverLetterSchema), async (req: AuthRequest, res: Response) => {
+router.post("/", validate(coverLetterSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { company, role, skills, tone } = req.body;
 

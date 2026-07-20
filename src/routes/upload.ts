@@ -28,7 +28,6 @@ const router = Router();
 
 router.post(
   "/resume",
-  verifyToken,
   upload.single("file"),
   async (req: FileRequest, res: Response) => {
     try {

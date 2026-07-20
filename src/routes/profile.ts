@@ -5,7 +5,7 @@ import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 const router = Router();
 
 // GET /api/profile — protected, নিজের profile fetch
-router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/",  async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const profile = await db.collection("profiles").findOne({ userId: req.user?.id });
@@ -17,7 +17,7 @@ router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /api/profile — protected, upsert (create or update)
-router.put("/", verifyToken, async (req: AuthRequest, res: Response) => {
+router.put("/",  async (req: AuthRequest, res: Response) => {
   try {
     const { resumeText, skills } = req.body;
     const db = getDB();

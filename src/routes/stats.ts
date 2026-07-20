@@ -4,7 +4,7 @@ import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 
 const router = Router();
 
-router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/",  async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const userId = req.user?.id;
