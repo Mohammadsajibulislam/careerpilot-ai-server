@@ -45,5 +45,16 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [process.env.CLIENT_URL || "http://localhost:3000"],
+  trustedOrigins: [
+    process.env.CLIENT_URL,
+    "https://careerpilot-ai-client.vercel.app",
+    "http://localhost:3000",
+  ].filter(Boolean) as string[],
+
+  cookies: {
+    session_token: {
+      sameSite: "none",
+      secure: true,
+    },
+  },
 });

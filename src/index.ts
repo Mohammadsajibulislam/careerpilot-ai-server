@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { connectDB } from "./config/db.js";
 import { auth } from "./lib/auth.js";
 import { toNodeHandler } from "better-auth/node";
@@ -10,12 +11,29 @@ import profileRouter from "./routes/profile.js";
 import matchRouter from "./routes/match.js";
 import interviewChatRouter from "./routes/interviewChat.js";
 import statsRouter from "./routes/stats.js";
+import reviewsRouter from "./routes/reviews.js";
+import coverLetterRouter from "./routes/coverLetter.js";
+import uploadRouter from "./routes/upload.js";
 
 const app: Application = express();
 
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "https://careerpilot-ai-client.vercel.app",
+  "http://localhost:3000",
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.some((o) => origin.startsWith(o))) {
+        cb(null, true);
+      } else {
+        cb(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -47,6 +65,9 @@ app.use("/api/profile", profileRouter);
 app.use("/api/match", matchRouter);
 app.use("/api/interview-chat", interviewChatRouter);
 app.use("/api/stats", statsRouter);
+app.use("/api/reviews", reviewsRouter);
+app.use("/api/cover-letter", coverLetterRouter);
+app.use("/api/upload", uploadRouter);
 
 // Only start the server when running directly (not on Vercel serverless)
 const isServerless = process.env.VERCEL === "1";

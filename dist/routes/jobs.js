@@ -2,6 +2,8 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/db.js";
 import { verifyToken } from "../middleware/verifyToken.js";
+import { validate } from "../middleware/validate.js";
+import { addJobSchema, updateJobSchema } from "../validators/job.js";
 const router = Router();
 // GET /api/jobs — public, with search/filter/sort/pagination
 router.get("/", async (req, res) => {
@@ -83,7 +85,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 // POST /api/jobs — protected
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyToken, validate(addJobSchema), async (req, res) => {
     try {
         const db = getDB();
         const newJob = {
@@ -102,7 +104,7 @@ router.post("/", verifyToken, async (req, res) => {
     }
 });
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id", verifyToken, async (req, res) => {
+router.patch("/:id", verifyToken, validate(updateJobSchema), async (req, res) => {
     try {
         const { id } = req.params;
         if (Array.isArray(id) || !ObjectId.isValid(id)) {

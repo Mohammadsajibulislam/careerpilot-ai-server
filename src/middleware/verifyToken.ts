@@ -3,7 +3,7 @@ import { auth } from "../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 
 export interface AuthRequest extends Request {
-  user?: { id: string; email: string; role: string };
+  user?: { id: string; email: string; name: string; role: string };
 }
 
 export async function verifyToken(req: AuthRequest, res: Response, next: NextFunction) {
@@ -19,6 +19,7 @@ export async function verifyToken(req: AuthRequest, res: Response, next: NextFun
     req.user = {
       id: session.user.id,
       email: session.user.email,
+      name: session.user.name,
       role: (session.user as { role?: string }).role || "user",
     };
 
