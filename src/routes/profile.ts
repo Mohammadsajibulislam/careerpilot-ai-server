@@ -5,7 +5,7 @@ import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 const router = Router();
 
 // GET /api/profile — protected, নিজের profile fetch
-router.get("/",  async (req: AuthRequest, res: Response) => {
+router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const profile = await db.collection("profiles").findOne({ userId: req.user?.id });
@@ -17,9 +17,13 @@ router.get("/",  async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /api/profile — protected, upsert (create or update)
-router.put("/",  async (req: AuthRequest, res: Response) => {
+router.put("/", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const { resumeText, skills } = req.body;
+    if (typeof resumeText !== "string" || !Array.isArray(skills)) {
+      return res.status(400).json({ message: "resumeText must be a string and skills must be an array" });
+    }
+
     const db = getDB();
 
     await db.collection("profiles").updateOne(

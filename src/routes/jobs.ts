@@ -65,16 +65,34 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
-router.get("/my/all",  async (req: AuthRequest, res: Response) => {
+router.get("/my/all", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    const jobs = await db
-      .collection("jobs")
-      .find({ postedBy: req.user?.id })
-      .sort({ updatedAt: -1 })
-      .toArray();
+    const { page = "1", limit = "100" } = req.query;
 
-    res.json({ jobs });
+    const pageNum = Math.max(parseInt(page as string, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 100, 1), 200);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query = { postedBy: req.user?.id };
+
+    const [jobs, total] = await Promise.all([
+      db
+        .collection("jobs")
+        .find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray(),
+      db.collection("jobs").countDocuments(query),
+    ]);
+
+    res.json({
+      jobs,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+    });
   } catch (error) {
     console.error("GET /jobs/my/all error:", error);
     res.status(500).json({ message: "Failed to fetch your jobs" });
@@ -104,7 +122,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/jobs — protected
-router.post("/",  validate(addJobSchema), async (req: AuthRequest, res: Response) => {
+router.post("/", verifyToken, validate(addJobSchema), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const newJob = {
@@ -124,7 +142,7 @@ router.post("/",  validate(addJobSchema), async (req: AuthRequest, res: Response
 });
 
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id",  validate(updateJobSchema), async (req: AuthRequest, res: Response) => {
+router.patch("/:id", verifyToken, validate(updateJobSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -149,7 +167,7 @@ router.patch("/:id",  validate(updateJobSchema), async (req: AuthRequest, res: R
 });
 
 // DELETE /api/jobs/:id — protected
-router.delete("/:id",  async (req: AuthRequest, res: Response) => {
+router.delete("/:id", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 

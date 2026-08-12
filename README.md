@@ -33,7 +33,7 @@ BETTER_AUTH_URL=http://localhost:5000
 CLIENT_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GEMINI_API_KEY=your-gemini-api-key
+OPENROUTER_API_KEY=your-openrouter-api-key
 ```
 
 ## Install

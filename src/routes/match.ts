@@ -1,19 +1,22 @@
 import { Router, Response } from "express";
 import { ObjectId } from "mongodb";
+import { z } from "zod";
 import { getDB } from "../config/db.js";
-import { ai, GEMINI_MODEL } from "../lib/gemini.js";
+import { client, AI_MODEL } from "../lib/ai.js";
+import { extractJsonObject } from "../lib/parseAiJson.js";
 import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
+import { aiLimiter } from "../middleware/rateLimit.js";
 
 const router = Router();
 
-interface MatchResult {
-  score: number;
-  reasons: string[];
-  gaps: string[];
-}
+const matchResultSchema = z.object({
+  score: z.number().min(0).max(100),
+  reasons: z.array(z.string()),
+  gaps: z.array(z.string()),
+});
 
 // POST /api/match/:jobId — protected, generates AI match score for one job
-router.post("/:jobId",  async (req: AuthRequest, res: Response) => {
+router.post("/:jobId", verifyToken, aiLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 
@@ -48,26 +51,24 @@ JOB CATEGORY: ${job.category}
 JOB REQUIREMENTS: ${job.requirements?.join(", ") || "none listed"}
 JOB DESCRIPTION: ${job.description}
 
-Return a match score from 0-100, 2-4 short reasons why it matches, and 0-3 short gaps (missing skills/experience). Keep every string under 15 words.`;
+Return a JSON object with score (0-100), reasons (array of strings), and gaps (array of strings). Keep every string under 15 words.`;
 
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            score: { type: "number" },
-            reasons: { type: "array", items: { type: "string" } },
-            gaps: { type: "array", items: { type: "string" } },
-          },
-          required: ["score", "reasons", "gaps"],
-        },
-      },
+    const response = await client.chat.completions.create({
+      model: AI_MODEL,
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const result: MatchResult = JSON.parse(response.text || "{}");
+    const text = response.choices[0]?.message?.content || "";
+    const parsed = extractJsonObject(text);
+
+    let result: z.infer<typeof matchResultSchema>;
+    try {
+      result = matchResultSchema.parse(parsed);
+    } catch {
+      return res.status(502).json({
+        message: "The AI returned an unexpected response — please try again",
+      });
+    }
 
     // cache করে রাখছি, বারবার একই job-এর জন্য AI call না করার জন্য
     await db.collection("matches").updateOne(
@@ -84,7 +85,7 @@ Return a match score from 0-100, 2-4 short reasons why it matches, and 0-3 short
 });
 
 // GET /api/match/:jobId — protected, cached result থাকলে সেটা ফেরত দেয়
-router.get("/:jobId", async (req: AuthRequest, res: Response) => {
+router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 

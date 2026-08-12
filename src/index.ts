@@ -6,6 +6,8 @@ import helmet from "helmet";
 import { connectDB } from "./config/db.js";
 import { auth } from "./lib/auth.js";
 import { toNodeHandler } from "better-auth/node";
+import { isOriginAllowed } from "./lib/origins.js";
+import { apiLimiter } from "./middleware/rateLimit.js";
 import jobsRouter from "./routes/jobs.js";
 import profileRouter from "./routes/profile.js";
 import matchRouter from "./routes/match.js";
@@ -28,7 +30,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.some((o) => origin.startsWith(o))) {
+      if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         cb(null, true);
       } else {
         cb(new Error("Not allowed by CORS"));
@@ -41,6 +43,8 @@ app.use(
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
+
+app.use("/api", apiLimiter);
 
 // lazily connect to DB on first request (works in serverless)
 let dbConnected = false;
@@ -68,6 +72,21 @@ app.use("/api/stats", statsRouter);
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/cover-letter", coverLetterRouter);
 app.use("/api/upload", uploadRouter);
+
+// 404 for unknown routes
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: `Route not found: ${req.method} ${req.path}` });
+});
+
+// Global error handler
+app.use((err: Error & { status?: number; statusCode?: number; code?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  const isMulterError = typeof err.code === "string" && err.code.startsWith("LIMIT_");
+  const status = isMulterError ? 400 : err.statusCode || err.status || 500;
+  if (status >= 500) {
+    console.error("Unhandled error:", err);
+  }
+  res.status(status).json({ message: status >= 500 ? "Something went wrong" : err.message });
+});
 
 // Only start the server when running directly (not on Vercel serverless)
 const isServerless = process.env.VERCEL === "1";

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/db.js";
+import { verifyToken } from "../middleware/verifyToken.js";
 import { validate } from "../middleware/validate.js";
 import { addJobSchema, updateJobSchema } from "../validators/job.js";
 const router = Router();
@@ -49,15 +50,30 @@ router.get("/", async (req, res) => {
     }
 });
 // GET /api/jobs/my/all — protected, শুধু নিজের saved jobs
-router.get("/my/all", async (req, res) => {
+router.get("/my/all", verifyToken, async (req, res) => {
     try {
         const db = getDB();
-        const jobs = await db
-            .collection("jobs")
-            .find({ postedBy: req.user?.id })
-            .sort({ updatedAt: -1 })
-            .toArray();
-        res.json({ jobs });
+        const { page = "1", limit = "100" } = req.query;
+        const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNum = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200);
+        const skip = (pageNum - 1) * limitNum;
+        const query = { postedBy: req.user?.id };
+        const [jobs, total] = await Promise.all([
+            db
+                .collection("jobs")
+                .find(query)
+                .sort({ updatedAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .toArray(),
+            db.collection("jobs").countDocuments(query),
+        ]);
+        res.json({
+            jobs,
+            total,
+            totalPages: Math.ceil(total / limitNum),
+            currentPage: pageNum,
+        });
     }
     catch (error) {
         console.error("GET /jobs/my/all error:", error);
@@ -84,7 +100,7 @@ router.get("/:id", async (req, res) => {
     }
 });
 // POST /api/jobs — protected
-router.post("/", validate(addJobSchema), async (req, res) => {
+router.post("/", verifyToken, validate(addJobSchema), async (req, res) => {
     try {
         const db = getDB();
         const newJob = {
@@ -103,7 +119,7 @@ router.post("/", validate(addJobSchema), async (req, res) => {
     }
 });
 // PATCH /api/jobs/:id — protected (status update, edit)
-router.patch("/:id", validate(updateJobSchema), async (req, res) => {
+router.patch("/:id", verifyToken, validate(updateJobSchema), async (req, res) => {
     try {
         const { id } = req.params;
         if (Array.isArray(id) || !ObjectId.isValid(id)) {
@@ -122,7 +138,7 @@ router.patch("/:id", validate(updateJobSchema), async (req, res) => {
     }
 });
 // DELETE /api/jobs/:id — protected
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         if (Array.isArray(id) || !ObjectId.isValid(id)) {

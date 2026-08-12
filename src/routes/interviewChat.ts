@@ -1,12 +1,13 @@
 import { Router, Response } from "express";
 import { ObjectId } from "mongodb";
 import { getDB } from "../config/db.js";
-import { ai, GEMINI_MODEL } from "../lib/gemini.js";
+import { client, AI_MODEL } from "../lib/ai.js";
 import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
+import { aiLimiter } from "../middleware/rateLimit.js";
 
 const router = Router();
 
-router.get("/:jobId", async (req: AuthRequest, res: Response) => {
+router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
     if (Array.isArray(jobId) || !ObjectId.isValid(jobId)) {
@@ -26,7 +27,7 @@ router.get("/:jobId", async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post("/:jobId",async (req: AuthRequest, res: Response) => {
+router.post("/:jobId", verifyToken, aiLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
     const { message } = req.body;
@@ -60,22 +61,22 @@ DESCRIPTION: ${job.description}
 
 Ask relevant interview questions, give feedback on the candidate's answers, and offer specific, actionable advice. Keep responses focused and conversational, under 120 words unless asked for more detail. If this is the first message, briefly greet them and ask an opening interview question for this role.`;
 
-    const contents = [
-      { role: "user" as const, parts: [{ text: systemContext }] },
-      { role: "model" as const, parts: [{ text: "Understood. I'll act as an interview coach for this role." }] },
+    const messages = [
+      { role: "system" as const, content: systemContext },
+      { role: "assistant" as const, content: "Understood. I'll act as an interview coach for this role." },
       ...history.map((m: { role: string; text: string }) => ({
-        role: m.role as "user" | "model",
-        parts: [{ text: m.text }],
+        role: m.role === "model" ? "assistant" as const : "user" as const,
+        content: m.text,
       })),
-      { role: "user" as const, parts: [{ text: message }] },
+      { role: "user" as const, content: message },
     ];
 
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents,
+    const response = await client.chat.completions.create({
+      model: AI_MODEL,
+      messages,
     });
 
-    const replyText = response.text || "Sorry, I couldn't generate a response. Please try again.";
+    const replyText = response.choices[0]?.message?.content || "Sorry, I couldn't generate a response. Please try again.";
 
     const newMessages = [
       ...history,
