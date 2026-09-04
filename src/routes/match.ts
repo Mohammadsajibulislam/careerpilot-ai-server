@@ -16,7 +16,7 @@ const matchResultSchema = z.object({
 });
 
 // POST /api/match/:jobId — protected, generates AI match score for one job
-router.post("/:jobId", verifyToken, aiLimiter, async (req: AuthRequest, res: Response) => {
+router.post("/:jobId", aiLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 
@@ -85,7 +85,7 @@ Return a JSON object with score (0-100), reasons (array of strings), and gaps (a
 });
 
 // GET /api/match/:jobId — protected, cached result থাকলে সেটা ফেরত দেয়
-router.get("/:jobId", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/:jobId", async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
 

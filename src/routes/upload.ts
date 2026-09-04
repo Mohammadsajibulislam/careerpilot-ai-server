@@ -1,9 +1,11 @@
 import { Router, Response } from "express";
 import multer, { FileFilterCallback } from "multer";
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 import { getDB } from "../config/db.js";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
 interface FileRequest extends AuthRequest {
   file?: Express.Multer.File;
@@ -34,13 +36,14 @@ const upload = multer({
 
 async function extractText(file: Express.Multer.File): Promise<string> {
   if (file.mimetype === "application/pdf") {
-    const parser = new PDFParse({ data: new Uint8Array(file.buffer) });
-    try {
-      const result = await parser.getText();
-      return result.text;
-    } finally {
-      await parser.destroy().catch(() => undefined);
+    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(file.buffer) }).promise;
+    let text = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(" ") + "\n";
     }
+    return text.trim();
   }
 
   if (file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {

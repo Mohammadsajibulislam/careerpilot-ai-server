@@ -6,7 +6,7 @@ const router = Router();
 
 const STATUSES = ["saved", "applied", "interview", "offer", "rejected"] as const;
 
-router.get("/", verifyToken, async (req: AuthRequest, res: Response) => {
+router.get("/", async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
     const userId = req.user?.id;

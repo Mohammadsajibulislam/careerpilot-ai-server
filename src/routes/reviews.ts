@@ -29,7 +29,7 @@ router.get("/:jobId", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/:jobId", verifyToken, validate(reviewSchema), async (req: AuthRequest, res: Response) => {
+router.post("/:jobId",  validate(reviewSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { jobId } = req.params;
     const { rating, comment } = req.body;
