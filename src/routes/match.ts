@@ -35,7 +35,7 @@ router.post("/:jobId", aiLimiter, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    if (!profile || (!profile.resumeText && profile.skills?.length === 0)) {
+    if (!profile || (!profile.resumeText && !profile.skills?.length)) {
       return res.status(400).json({
         message: "Add your skills and resume summary in your profile first",
       });
@@ -43,7 +43,7 @@ router.post("/:jobId", aiLimiter, async (req: AuthRequest, res: Response) => {
 
     const prompt = `You are a job-matching assistant. Compare this candidate profile against this job and return a match analysis.
 
-CANDIDATE SKILLS: ${profile.skills.join(", ") || "none listed"}
+CANDIDATE SKILLS: ${profile.skills?.join(", ") || "none listed"}
 CANDIDATE BACKGROUND: ${profile.resumeText || "none provided"}
 
 JOB TITLE: ${job.title}

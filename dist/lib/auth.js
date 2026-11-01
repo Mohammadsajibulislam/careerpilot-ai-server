@@ -9,10 +9,14 @@ if (!authDbName)
     throw new Error("❌ AUTH_DB_NAME .env ফাইলে পাওয়া যায়নি");
 const authClient = new MongoClient(authUri);
 const authDb = authClient.db(authDbName);
+const authBaseURL = process.env.BETTER_AUTH_URL || "http://localhost:5000";
+// Cross-site cookies (client and API on different hosts) require SameSite=None + Secure.
+// Over plain HTTP (local dev) those attributes would make the browser drop the cookie.
+const isHttps = authBaseURL.startsWith("https://");
 export const auth = betterAuth({
     database: mongodbAdapter(authDb),
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
+    baseURL: authBaseURL,
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
@@ -43,10 +47,10 @@ export const auth = betterAuth({
         "https://careerpilot-ai-client.vercel.app",
         "http://localhost:3000",
     ].filter(Boolean),
-    cookies: {
-        session_token: {
-            sameSite: "none",
-            secure: true,
+    advanced: {
+        defaultCookieAttributes: {
+            sameSite: isHttps ? "none" : "lax",
+            secure: isHttps,
         },
     },
 });

@@ -1,11 +1,28 @@
 import { Router, Response } from "express";
+import path from "node:path";
+import { createRequire } from "node:module";
 import multer, { FileFilterCallback } from "multer";
 import mammoth from "mammoth";
 import { verifyToken, AuthRequest } from "../middleware/verifyToken.js";
 import { getDB } from "../config/db.js";
+import { extractSkills } from "../lib/skills.js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+// Note: do NOT set `GlobalWorkerOptions.workerSrc` here. In Node, pdfjs-dist
+// disables the real worker and sets a default workerSrc used for its in-process
+// fake worker. Overwriting it (even with "") breaks PDF parsing at runtime.
+
+// pdfjs needs its bundled font/CMap data to read non-embedded standard fonts
+// (e.g. Helvetica). Resolve them from the installed package so extraction does
+// not emit "standardFontDataUrl is required" warnings.
+const pdfjsRequire = createRequire(import.meta.url);
+const PDFJS_ROOT = path.resolve(
+  path.dirname(pdfjsRequire.resolve("pdfjs-dist/legacy/build/pdf.mjs")),
+  "..",
+  ".."
+);
+const STANDARD_FONT_DATA_URL = path.join(PDFJS_ROOT, "standard_fonts") + path.sep;
+const CMAP_URL = path.join(PDFJS_ROOT, "cmaps") + path.sep;
 
 interface FileRequest extends AuthRequest {
   file?: Express.Multer.File;
@@ -36,7 +53,12 @@ const upload = multer({
 
 async function extractText(file: Express.Multer.File): Promise<string> {
   if (file.mimetype === "application/pdf") {
-    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(file.buffer) }).promise;
+    const doc = await pdfjsLib.getDocument({
+      data: new Uint8Array(file.buffer),
+      standardFontDataUrl: STANDARD_FONT_DATA_URL,
+      cMapUrl: CMAP_URL,
+      cMapPacked: true,
+    }).promise;
     let text = "";
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
@@ -73,8 +95,9 @@ router.post(
       }
 
       const db = getDB();
+      const detectedSkills = extractSkills(text);
 
-      await db.collection("profiles").updateOne(
+      const profile = await db.collection("profiles").findOneAndUpdate(
         { userId: req.user?.id },
         {
           $set: {
@@ -82,14 +105,18 @@ router.post(
             resumeFileName: req.file.originalname,
             updatedAt: new Date(),
           },
+          // Merge detected skills without duplicating the user's existing ones.
+          $addToSet: { skills: { $each: detectedSkills } },
         },
-        { upsert: true }
+        { upsert: true, returnDocument: "after" }
       );
 
       res.json({
         message: "Resume uploaded",
         fileName: req.file.originalname,
         textLength: text.length,
+        resumeText: text,
+        skills: Array.isArray(profile?.skills) ? profile.skills : detectedSkills,
       });
     } catch (error) {
       console.error("POST /upload/resume error:", error);
