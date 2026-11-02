@@ -19,12 +19,19 @@ import uploadRouter from "./routes/upload.js";
 
 const app: Application = express();
 
+// Vercel terminates TLS and forwards the client IP via X-Forwarded-For/Forwarded.
+// Trust the first proxy hop so req.ip and rate limiting see the real client.
+app.set("trust proxy", 1);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "https://careerpilot-ai-client.vercel.app",
+  // Deployment-specific and preview URLs for the client project.
+  "https://careerpilot-ai-client-*.vercel.app",
   "http://localhost:3000",
+  "http://127.0.0.1:3000",
 ].filter(Boolean) as string[];
 
 app.use(
@@ -33,7 +40,9 @@ app.use(
       if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         cb(null, true);
       } else {
-        cb(new Error("Not allowed by CORS"));
+        const err = new Error("Not allowed by CORS") as Error & { statusCode: number };
+        err.statusCode = 403;
+        cb(err);
       }
     },
     credentials: true,

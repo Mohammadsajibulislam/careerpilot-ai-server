@@ -28,6 +28,10 @@ export const auth = betterAuth({
 
   account: {
     accountLinking: {
+      // Allow signing in with Google even when the same email already exists
+      // as an email/password account (Google verifies emails).
+      enabled: true,
+      trustedProviders: ["google"],
       requireLocalEmailVerified: false,
     },
     storeStateStrategy: "database",
@@ -37,6 +41,8 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      // Must be registered as an "Authorized redirect URI" in Google Cloud Console.
+      redirectURI: process.env.GOOGLE_REDIRECT_URI,
     },
   },
 
@@ -53,7 +59,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.CLIENT_URL,
     "https://careerpilot-ai-client.vercel.app",
+    "https://careerpilot-ai-client-*.vercel.app",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
   ].filter(Boolean) as string[],
 
   advanced: {

@@ -5,6 +5,7 @@ Backend API for CareerPilot AI built with Express, TypeScript, and MongoDB.
 ## Overview
 
 This repo serves the CareerPilot AI backend, including:
+
 - Job CRUD endpoints
 - User authentication via Better Auth
 - Interview chat and match APIs
@@ -31,8 +32,8 @@ AUTH_DB_NAME=better-auth-db
 BETTER_AUTH_SECRET=your-better-auth-secret
 BETTER_AUTH_URL=http://localhost:5000
 CLIENT_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CLIENT_ID =your-google-client-id
+CLIENT_SECRET=your-google-client-secret
 OPENROUTER_API_KEY=your-openrouter-api-key
 ```
 
